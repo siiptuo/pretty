@@ -1,0 +1,53 @@
+#!/bin/bash
+
+# pretty - prettify many formats with single command
+#
+# Written in 2017 by Tuomas Siipola
+#
+# To the extent possible under law, the author(s) have dedicated all
+# copyright and related and neighboring rights to this software to the
+# public domain worldwide. This software is distributed without any
+# warranty.  You should have received a copy of the CC0 Public Domain
+#
+# Dedication along with this software. If not, see
+# <http://creativecommons.org/publicdomain/zero/1.0/>. 
+
+function usage {
+    echo 'Usage: pretty [-i | -o OUTPUT] INPUT'
+    exit 1
+}
+
+inplace=false
+output=
+
+while getopts ':hio:' opt; do
+    case $opt in
+        h) usage;;
+        i) inplace=true;;
+        o) output="$OPTARG";;
+        ?) echo "Invalid option: -$OPTARG"; usage;;
+    esac
+done
+
+shift $((OPTIND - 1))
+input=$1
+
+if [ -n "$output" ] && [ "$inplace" = true ]; then
+    echo "Choose either -i or -o"
+    usage
+fi
+
+if [ -z "$input" ]; then
+    echo "No input given"
+    usage
+fi
+
+if [ -n "$output" ]; then
+    jq --indent 4 '.' "$input" > "$output"
+elif [ "$inplace" = true ]; then
+    tmp="$(mktemp)"
+    jq --indent 4 '.' "$input" > "$tmp"
+    mv "$tmp" "$input"
+else
+    jq --indent 4 --monochrome-output '.' "$input"
+fi
