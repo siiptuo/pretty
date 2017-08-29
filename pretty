@@ -42,12 +42,35 @@ if [ -z "$input" ]; then
     usage
 fi
 
+cmd=
+cmd_stdout=
+
+if [ -x "$(command -v jq)" ]; then
+    cmd="jq --indent 4 ."
+    cmd_stdout="jq --indent 4 --monochrome-output ."
+elif [ -x "$(command -v python)" ]; then
+    cmd="python -m json.tool"
+    cmd_stdout=$cmd
+elif [ -x "$(command -v json-glib-format)" ]; then
+    cmd="json-glib-format --indent-spaces 4 --prettify"
+    cmd_stdout=$cmd
+elif [ -x "$(command -v json_xs)" ]; then
+    cmd="json_xs <"
+    cmd_stdout=$cmd
+# TODO: json_reformat from yajl
+# TODO: aeson-pretty
+# TODO: jshon
+else
+    echo "No JSON formatter found"
+    exit 1
+fi
+
 if [ -n "$output" ]; then
-    jq --indent 4 '.' "$input" > "$output"
+    eval "$cmd" "$input" > "$output"
 elif [ "$inplace" = true ]; then
     tmp="$(mktemp)"
-    jq --indent 4 '.' "$input" > "$tmp"
+    eval "$cmd" "$input" > "$tmp"
     mv "$tmp" "$input"
 else
-    jq --indent 4 --monochrome-output '.' "$input"
+    eval "$cmd_stdout" "$input"
 fi
