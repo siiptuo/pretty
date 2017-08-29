@@ -81,6 +81,21 @@ case $extension in
             exit 1
         fi
         ;;
+    "css")
+        if [ -x "$(command -v cleancss)" ]; then
+            cmd="cleancss --format beautify"
+            cmd_stdout=$cmd
+        elif [ -x "$(command -v beautify-css)" ]; then
+            cmd="beautify-css <"
+            cmd_stdout=$cmd
+        elif [ -x "$(command -v cssparse)" ]; then
+            cmd="cssparse"
+            cmd_stdout=$cmd
+        else
+            echo "No CSS formatter found"
+            exit 1
+        fi
+        ;;
     *)
         echo "Unknown format with file extension: $extension"
         exit 1
