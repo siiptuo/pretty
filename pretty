@@ -42,28 +42,50 @@ if [ -z "$input" ]; then
     usage
 fi
 
+extension=${input##*.}
+
 cmd=
 cmd_stdout=
 
-if [ -x "$(command -v jq)" ]; then
-    cmd="jq --indent 4 ."
-    cmd_stdout="jq --indent 4 --monochrome-output ."
-elif [ -x "$(command -v python)" ]; then
-    cmd="python -m json.tool"
-    cmd_stdout=$cmd
-elif [ -x "$(command -v json-glib-format)" ]; then
-    cmd="json-glib-format --indent-spaces 4 --prettify"
-    cmd_stdout=$cmd
-elif [ -x "$(command -v json_xs)" ]; then
-    cmd="json_xs <"
-    cmd_stdout=$cmd
-# TODO: json_reformat from yajl
-# TODO: aeson-pretty
-# TODO: jshon
-else
-    echo "No JSON formatter found"
-    exit 1
-fi
+case $extension in
+    "json")
+        if [ -x "$(command -v jq)" ]; then
+            cmd="jq --indent 4 ."
+            cmd_stdout="jq --indent 4 --monochrome-output ."
+        elif [ -x "$(command -v python)" ]; then
+            cmd="python -m json.tool"
+            cmd_stdout=$cmd
+        elif [ -x "$(command -v json-glib-format)" ]; then
+            cmd="json-glib-format --indent-spaces 4 --prettify"
+            cmd_stdout=$cmd
+        elif [ -x "$(command -v json_xs)" ]; then
+            cmd="json_xs <"
+            cmd_stdout=$cmd
+        # TODO: json_reformat from yajl
+        # TODO: aeson-pretty
+        # TODO: jshon
+        else
+            echo "No JSON formatter found"
+            exit 1
+        fi
+        ;;
+    "js")
+        if [ -x "$(command -v uglifyjs)" ]; then
+            cmd="uglifyjs --beautify --"
+            cmd_stdout=$cmd
+        elif [ -x "$(command -v js-beautify)" ]; then
+            cmd="js-beautify"
+            cmd_stdout=$cmd
+        else
+            echo "No JavaScript formatter found"
+            exit 1
+        fi
+        ;;
+    *)
+        echo "Unknown format with file extension: $extension"
+        exit 1
+        ;;
+esac
 
 if [ -n "$output" ]; then
     eval "$cmd" "$input" > "$output"
