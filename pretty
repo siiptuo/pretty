@@ -96,6 +96,26 @@ case $extension in
             exit 1
         fi
         ;;
+    "xml")
+        if [ -x "$(command -v xmllint)" ]; then
+            cmd="xmllint --format"
+            cmd_stdout=$cmd
+        elif [ -x "$(command -v xml_pp)" ]; then
+            cmd="xml_pp"
+            cmd_stdout=$cmd
+            # TODO: support -i for in place edit
+        elif [ -x "$(command -v xml)" ]; then
+            cmd="xml format"
+            cmd_stdout=$cmd
+        elif [ -x "$(command -v tidy)" ]; then
+            cmd="tidy --quiet yes --input-xml yes --output-xml yes --indent yes --indent-attributes yes --vertical-space yes"
+            cmd_stdout=$cmd
+            # TODO: support --output-file and --write-back
+        else
+            echo "No XML formatter found"
+            exit 1
+        fi
+        ;;
     *)
         echo "Unknown format with file extension: $extension"
         exit 1
