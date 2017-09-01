@@ -116,6 +116,19 @@ case $extension in
             exit 1
         fi
         ;;
+    "html")
+        if [ -x "$(command -v tidy)" ]; then
+            cmd="tidy --quiet yes --indent yes"
+            cmd_stdout=$cmd
+            # TODO: support --output-file and --write-back
+        elif [ -x "$(command -v xml)" ]; then
+            cmd="xml format --html"
+            cmd_stdout=$cmd
+        else
+            echo "No HTML formatter found"
+            exit 1
+        fi
+        ;;
     *)
         echo "Unknown format with file extension: $extension"
         exit 1
