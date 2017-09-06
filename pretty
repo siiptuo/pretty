@@ -129,6 +129,15 @@ case $extension in
             exit 1
         fi
         ;;
+    "sql")
+        if [ -x "$(command -v sqlformat)" ]; then
+            cmd="sqlformat --keywords upper --identifiers lower --reindent"
+            cmd_stdout=$cmd
+        else
+            echo "No HTML formatter found"
+            exit 1
+        fi
+        ;;
     *)
         echo "Unknown format with file extension: $extension"
         exit 1
