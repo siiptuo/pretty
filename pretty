@@ -116,7 +116,7 @@ case "${extension,,}" in
             exit 1
         fi
         ;;
-    "html")
+    "html" | "htm")
         if [ -x "$(command -v tidy)" ]; then
             cmd="tidy --quiet yes --indent yes"
             cmd_stdout=$cmd
