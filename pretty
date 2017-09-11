@@ -13,18 +13,19 @@
 # <http://creativecommons.org/publicdomain/zero/1.0/>. 
 
 function usage {
-    echo 'Usage: pretty [-i | -o OUTPUT] INPUT'
+    echo 'Usage: pretty [-i | -o OUTPUT] [-f FORMAT] INPUT'
     exit 1
 }
 
 inplace=false
 output=
 
-while getopts ':hio:' opt; do
+while getopts ':hio:f:' opt; do
     case $opt in
         h) usage;;
         i) inplace=true;;
         o) output="$OPTARG";;
+        f) extension="$OPTARG";;
         ?) echo "Invalid option: -$OPTARG"; usage;;
     esac
 done
@@ -42,7 +43,9 @@ if [ -z "$input" ]; then
     usage
 fi
 
-extension=${input##*.}
+if [ -z "$extension" ]; then
+    extension=${input##*.}
+fi
 
 cmd=
 cmd_stdout=
