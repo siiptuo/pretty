@@ -47,7 +47,7 @@ extension=${input##*.}
 cmd=
 cmd_stdout=
 
-case $extension in
+case "${extension,,}" in
     "json")
         if [ -x "$(command -v jq)" ]; then
             cmd="jq --indent 4 ."
