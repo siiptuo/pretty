@@ -13,7 +13,14 @@
 # <http://creativecommons.org/publicdomain/zero/1.0/>. 
 
 function usage {
-    echo 'Usage: pretty [-i | -o OUTPUT] [-f FORMAT] INPUT'
+    echo 'Usage: pretty [-i | -o OUTPUT] [-f FORMAT] FILE'
+    echo 'Crettify many formats with single command'
+    echo
+    echo 'When FILE is -, read standard input'
+    echo
+    echo '  -i  modify file in-place'
+    echo '  -o  write output to file'
+    echo '  -f  input format'
     exit 1
 }
 
