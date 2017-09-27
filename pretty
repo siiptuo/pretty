@@ -38,32 +38,34 @@ if [ -n "$output" ] && [ "$inplace" = true ]; then
     usage
 fi
 
-if [ -z "$input" ]; then
-    echo "No input given"
-    usage
+if [ "$input" = "-" ]; then
+    unset input
+    if [ -z "$extension" ]; then
+        echo "Format required"
+        usage
+    fi
+else
+    if [ -z "$input" ]; then
+        echo "No input given"
+        usage
+    fi
+    if [ -z "$extension" ]; then
+        extension=${input##*.}
+    fi
 fi
-
-if [ -z "$extension" ]; then
-    extension=${input##*.}
-fi
-
-cmd=
-cmd_stdout=
 
 case "${extension,,}" in
     "json")
         if [ -x "$(command -v jq)" ]; then
-            cmd="jq --indent 4 ."
-            cmd_stdout="jq --indent 4 --monochrome-output ."
+            cmd="jq --indent 4 --monochrome-output ."
         elif [ -x "$(command -v python)" ]; then
             cmd="python -m json.tool"
-            cmd_stdout=$cmd
         elif [ -x "$(command -v json-glib-format)" ]; then
             cmd="json-glib-format --indent-spaces 4 --prettify"
-            cmd_stdout=$cmd
+            simulate_stdin=true
         elif [ -x "$(command -v json_xs)" ]; then
-            cmd="json_xs <"
-            cmd_stdout=$cmd
+            cmd="json_xs"
+            only_stdin=true
         # TODO: json_reformat from yajl
         # TODO: aeson-pretty
         # TODO: jshon
@@ -75,10 +77,9 @@ case "${extension,,}" in
     "js")
         if [ -x "$(command -v uglifyjs)" ]; then
             cmd="uglifyjs --beautify --"
-            cmd_stdout=$cmd
         elif [ -x "$(command -v js-beautify)" ]; then
             cmd="js-beautify"
-            cmd_stdout=$cmd
+            # TODO: support --replace
         else
             echo "No JavaScript formatter found"
             exit 1
@@ -87,13 +88,12 @@ case "${extension,,}" in
     "css")
         if [ -x "$(command -v cleancss)" ]; then
             cmd="cleancss --format beautify"
-            cmd_stdout=$cmd
         elif [ -x "$(command -v beautify-css)" ]; then
-            cmd="beautify-css <"
-            cmd_stdout=$cmd
+            cmd="beautify-css"
+            # TODO: support --in-place
         elif [ -x "$(command -v cssparse)" ]; then
             cmd="cssparse"
-            cmd_stdout=$cmd
+            simulate_stdin=true
         else
             echo "No CSS formatter found"
             exit 1
@@ -102,18 +102,15 @@ case "${extension,,}" in
     "xml")
         if [ -x "$(command -v xmllint)" ]; then
             cmd="xmllint --format"
-            cmd_stdout=$cmd
+            stdin_dash=true
         elif [ -x "$(command -v xml_pp)" ]; then
             cmd="xml_pp"
-            cmd_stdout=$cmd
             # TODO: support -i for in place edit
         elif [ -x "$(command -v xml)" ]; then
             cmd="xml format"
-            cmd_stdout=$cmd
         elif [ -x "$(command -v tidy)" ]; then
             cmd="tidy --quiet yes --input-xml yes --output-xml yes --indent yes --indent-attributes yes --vertical-space yes"
-            cmd_stdout=$cmd
-            # TODO: support --output-file and --write-back
+            # TODO: support --write-back
         else
             echo "No XML formatter found"
             exit 1
@@ -122,11 +119,9 @@ case "${extension,,}" in
     "html" | "htm")
         if [ -x "$(command -v tidy)" ]; then
             cmd="tidy --quiet yes --indent yes"
-            cmd_stdout=$cmd
-            # TODO: support --output-file and --write-back
+            # TODO: support --write-back
         elif [ -x "$(command -v xml)" ]; then
             cmd="xml format --html"
-            cmd_stdout=$cmd
         else
             echo "No HTML formatter found"
             exit 1
@@ -135,7 +130,7 @@ case "${extension,,}" in
     "sql")
         if [ -x "$(command -v sqlformat)" ]; then
             cmd="sqlformat --keywords upper --identifiers lower --reindent"
-            cmd_stdout=$cmd
+            stdin_dash=true
         else
             echo "No HTML formatter found"
             exit 1
@@ -147,6 +142,17 @@ case "${extension,,}" in
         ;;
 esac
 
+if [ -z "$input" ]; then
+    if [ "$simulate_stdin" = true ]; then
+        input="$(mktemp)"
+        cat > $input
+    elif [ "$stdin_dash" = true ]; then
+        input='-'
+    fi
+elif [ -n "$input" ] && [ "$only_stdin" = true ]; then
+    input="< $input"
+fi
+
 if [ -n "$output" ]; then
     eval "$cmd" "$input" > "$output"
 elif [ "$inplace" = true ]; then
@@ -154,5 +160,9 @@ elif [ "$inplace" = true ]; then
     eval "$cmd" "$input" > "$tmp"
     mv "$tmp" "$input"
 else
-    eval "$cmd_stdout" "$input"
+    eval "$cmd" "$input"
+fi
+
+if [ -z "$input" ] && [ "$simulate_stdin" = true ]; then
+    rm $input
 fi
